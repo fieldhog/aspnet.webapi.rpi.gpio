@@ -58,8 +58,19 @@ namespace aspnet.webapi.rpi.gpio
             {
                 lcd.Init();
                 lcd.Clear();
-                lcd.Write(0, 0, "Hello");
-                lcd.Write(0, 1, "World!");
+
+                var screenWidth = 16;
+                var message = "Hello Krysia,  how are you today?";
+                var text = message.PadLeft(message.Length + screenWidth).PadRight(message.Length + 2 * screenWidth);
+
+                for (var i = 0; i < text.Length - screenWidth + 1; i++)
+                {
+                    lcd.Write(0, 0, text.Substring(i, screenWidth));
+                    Thread.Sleep(250);
+                }
+
+                //lcd.Write(0, 0, "Hello Krysia");
+                //lcd.Write(0, 1, "How are you?");
             }
         }
 
