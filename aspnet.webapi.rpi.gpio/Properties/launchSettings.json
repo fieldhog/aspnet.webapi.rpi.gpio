@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "aspnet.webapi.rpi.gpio": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false,
+      "remoteDebugMachine": "",
+      "nativeDebugging": true
+    }
+  }
+}

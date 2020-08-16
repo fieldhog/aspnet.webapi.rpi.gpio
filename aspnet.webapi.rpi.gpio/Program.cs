@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using Unosquare.RaspberryIO;
 using Unosquare.RaspberryIO.Abstractions;
@@ -10,19 +13,70 @@ namespace aspnet.webapi.rpi.gpio
     {
         static void Main(string[] args)
         {
+            if (args.Contains("-d")) {
+                Console.WriteLine("waiting for debugger attach");
+                for (; ; )
+                {
+                    Console.Write(".");
+                    if (Debugger.IsAttached) break;
+                    Thread.Sleep(1000);
+                }
+            }
+
             Console.WriteLine("Hello World!");
 
-            //Pi.Init<BootstrapWiringPi>();
+            Pi.Init<BootstrapWiringPi>();
 
             //Test();
 
             //BlinkLed();
 
-            Test1602();
+            //Test1602();
 
             //PulseLED();
 
+            ShiftRegister();
+
             Console.WriteLine("Goodbye World!");
+        }
+
+        static void ShiftRegister()
+        {
+            var dataPin = Pi.Gpio[BcmPin.Gpio17];
+            var latchPin = Pi.Gpio[BcmPin.Gpio27];
+            var clockPin = Pi.Gpio[BcmPin.Gpio22];
+
+            dataPin.PinMode = GpioPinDriveMode.Output;
+            latchPin.PinMode = GpioPinDriveMode.Output;
+            clockPin.PinMode = GpioPinDriveMode.Output;
+
+            const int updateDelay = 50;
+
+            var output = "abcdefghijklmnopqrstuvwxyz  serial to prallel converter";
+            foreach(var c in Encoding.ASCII.GetBytes(output)) {
+                latchPin.Write(false);
+                ShiftOut(dataPin, clockPin, true, c);
+                latchPin.Write(true);
+                Thread.Sleep(updateDelay);
+            }
+        }
+
+        static void ShiftOut(IGpioPin dPin, IGpioPin cPin, bool lsbFirst, int val)
+        {
+            const int shiftDelay = 1;
+
+            int i; for (i = 0; i < 8; i++)
+            {
+                cPin.Write(false);
+
+                if (lsbFirst)
+                    dPin.Write((0x01 & (val >> i)) == 0x01); 
+                else
+                    dPin.Write((0x80 & (val << i)) == 0x80);
+
+                Thread.Sleep(shiftDelay);
+                cPin.Write(true);
+            }
         }
 
         static void Test()
@@ -68,9 +122,6 @@ namespace aspnet.webapi.rpi.gpio
                     lcd.Write(0, 0, text.Substring(i, screenWidth));
                     Thread.Sleep(250);
                 }
-
-                //lcd.Write(0, 0, "Hello Krysia");
-                //lcd.Write(0, 1, "How are you?");
             }
         }
 
