@@ -35,9 +35,37 @@ namespace aspnet.webapi.rpi.gpio
 
             //PulseLED();
 
-            ShiftRegister();
+            //ShiftRegister();
+
+            MatrixTest();
 
             Console.WriteLine("Goodbye World!");
+        }
+
+        static void MatrixTest()
+        {
+            var dataPin = Pi.Gpio[BcmPin.Gpio17];
+            var latchPin = Pi.Gpio[BcmPin.Gpio27];
+            var clockPin = Pi.Gpio[BcmPin.Gpio22];
+
+            dataPin.PinMode = GpioPinDriveMode.Output;
+            latchPin.PinMode = GpioPinDriveMode.Output;
+            clockPin.PinMode = GpioPinDriveMode.Output;
+
+            var pic = new []{ 0x1c, 0x22, 0x51, 0x45, 0x45, 0x51, 0x22, 0x1c };
+
+            for (var count = 0; count < 50; count++) {
+                var column = 0x80;
+                for (var i = 0; i < 8; i++)
+                {
+                    latchPin.Write(false);
+                    ShiftOut(dataPin, clockPin, false, pic[i]);// first shift data of line information to the first stage 74HC959
+                    ShiftOut(dataPin, clockPin, true, ~column);//then shift data of column information to the second stage 74HC959
+                    latchPin.Write(true); //Output data of two stage 74HC595 at the same 
+
+                    column >>= 1;   //display the next columndelay(1);
+                }
+            }
         }
 
         static void ShiftRegister()
